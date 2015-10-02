@@ -1,5 +1,5 @@
 
-j=4
+j=16
 
 dst='/opt'
 mds="${dst}/modules"

@@ -4,8 +4,8 @@ name="openmpi"
 # vers="1.6.5"
 # vers="1.7.3"
 # vers="1.8.1"
-vers="1.8.8"
-
+# vers="1.8.8"
+vers="1.10.0"
 . conf.sh
 . funs.sh
 
