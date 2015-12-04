@@ -1,18 +1,26 @@
 #!/bin/bash
 
 name=gcc
-vers=5.2.0
-
+# vers=5.2.0
+vers=5.3.0
 
 . conf.sh
 . funs.sh
 
 dnlifnh ftp://ftp.mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-${vers}/gcc-${vers}.tar.bz2
-dnlifnh https://gmplib.org/download/gmp/gmp-6.0.0a.tar.bz2
-dnlifnh http://www.mpfr.org/mpfr-current/mpfr-3.1.3.tar.bz2
+# dnlifnh https://gmplib.org/download/gmp/gmp-6.0.0a.tar.bz2
+# dnlifnh http://www.mpfr.org/mpfr-current/mpfr-3.1.3.tar.bz2
 dnlifnh ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.3.tar.gz
 dnlifnh http://isl.gforge.inria.fr/isl-0.14.tar.bz2 # isl 0.15 breaks gcc 5.2.0
 
+# for v5.3.0
+dnlifnh https://gmplib.org/download/gmp/gmp-6.1.0.tar.bz2
+dnlifnh ftp://gcc.gnu.org/pub/gcc/infrastructure/mpfr-2.4.2.tar.bz2
+
+
+
+
+mpath="${mds}/o/${mname}"
 
 mkdir -p $(dirname $mpath)
 

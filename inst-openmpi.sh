@@ -4,12 +4,19 @@ name="openmpi"
 # vers="1.6.5"
 # vers="1.7.3"
 # vers="1.8.1"
+# vers="1.8.4"
 # vers="1.8.8"
-vers="1.10.0"
+# vers="1.10.0"
+# vers="1.10.1rc1"
+vers="1.10.1"
+
+
 . conf.sh
 . funs.sh
 
-sfx=("intel/15.0.2/o" "intel/15.0.2/d" "gcc/5.2.0/o" "gcc/5.2.0/d")
+#sfx=("intel/15.0.4/o" "intel/15.0.4/d" "intel/16.0.0/o" "intel/16.0.0/d"  "gcc/5.2.0/o" "gcc/5.2.0/d")
+#sfx=("intel/15.0.4/o" "intel/15.0.4/d")
+sfx=("intel/14.0.1/o" "intel/14.0.1/d" "intel/15.0.4/o" "intel/15.0.4/d" "intel/16.0.0/o"  "intel/16.0.0/d" "gcc/5.2.0/o" "gcc/5.2.0/d" "gcc/5.3.0/o" "gcc/5.3.0/d")
 
 declare -A confflags
 confflags['d']="--enable-debug --enable-mem-debug --enable-mem-profile --enable-memchecker"
@@ -22,16 +29,38 @@ pushd $bldrt
 tar -xf ${cwd}/${name}-${vers}.tar.bz2
 pushd ${name}-${vers}
 
-for i in  0 1 2 3
-do
-    co=${sfx[i]%%/*}    # compiler
-    cv=${sfx[i]%/*}     # compiler/version
-    st=${sfx[i]#${cv}/} # style: o or d
-    cs=${co}/${st}      # compiler/style
 
-    mname="${name}/${vers}/${sfx[i]}"
-    prefx="${dst}/${mname}"
-    mpath="${mds}/${mname}"
+module load debug
+
+for i in  0 1 2 3 4 5 6 7 8 9
+do
+    echo
+
+    # compiler
+    co=${sfx[i]%%/*}
+
+    # compiler version
+    cv=${sfx[i]#${co}/}
+    cv=${cv%%/*}
+
+    # style: o or d
+    st=${sfx[i]#${co}/${cv}}
+    st=${st#/}
+
+    cs="${co}/${st}"
+
+    mname="${name}/${vers}/${co}/${cv}"
+    prefx="${dst}/${mname}/${st}"
+    mpath="${mds}/${st}/${mname}"
+
+
+    echo co $co
+    echo cv $cv
+    echo st $st
+
+    echo mname $mname
+    echo prefx $prefx
+    echo mpath $mpath
 
     mkdir -p $(dirname $mpath)
 
@@ -46,7 +75,7 @@ proc ModulesHelp { } {
   puts stderr describe
 }
 
-set describe \"${stil[$st]} ${name} v${vers} compiled with $co v${cv#${co}/}\"
+set describe \"${stil[$st]} ${name} v${vers} compiled with $co v${cv}\"
 
 module-whatis     \$describe
 
@@ -55,13 +84,17 @@ conflict          mpich
 conflict          mpich2
 conflict          mvapich
 conflict          mvapich2
-conflict          intelmpi
+conflict          impi
+
+conflict          d/$name
+conflict          d/mpich
+conflict          d/mpich2
+conflict          d/mvapich
+conflict          d/mvapich2
+conflict          d/impi
 
 
-if {![is-loaded $cv]} then {
-  puts stderr \"loading prerequisite module $cv\"
-  module load $cv
-}
+module load $co/$cv
 
 set               main_root            $prefx
 
@@ -74,14 +107,14 @@ prepend-path      MANPATH              \$main_root/share/man
 
 prepend-path      LIBRARY_PATH         \$main_root/lib
 prepend-path      LD_LIBRARY_PATH      \$main_root/lib
-#prepend-path      LD_RUN_PATH          \$main_root/lib
+prepend-path      LD_RUN_PATH          \$main_root/lib
 
 prepend-path      LIBRARY_PATH         \$main_root/lib64
 prepend-path      LD_LIBRARY_PATH      \$main_root/lib64
-#prepend-path      LD_RUN_PATH          \$main_root/lib64
+prepend-path      LD_RUN_PATH          \$main_root/lib64
 " > $mpath
 
-    module load $cv $mname
+    module load $co/$cv ${mpref[$st]}$mname
 
     bld=${sfx[i]}
     rm -rf $bld
@@ -90,15 +123,15 @@ prepend-path      LD_LIBRARY_PATH      \$main_root/lib64
 
 
     echo ${bldrt}/${name}-${vers}/configure --prefix=$prefx  \
-        --disable-vt --with-pmi --enable-mpi-interface-warning \
-        --enable-static --disable-java --enable-mpi-ext=all ${confflags[$st]} \
+        --disable-vt --without-pmi --enable-mpi-interface-warning --disable-wrapper-rpath \
+        --enable-static --disable-java --enable-mpi-ext=all ${confflags[${st}]} \
         CC="${cc[$co]}"   CFLAGS="${flags[$cs]}" \
         CXX="${cxx[$co]}" CXXFLAGS="${flags[$cs]}" \
         FC="${fc[$co]}"   FCFLAGS="${flags[$cs]}"
 
     ${bldrt}/${name}-${vers}/configure --prefix=$prefx  \
-        --disable-vt --with-pmi --enable-mpi-interface-warning \
-        --enable-static --disable-java --enable-mpi-ext=all ${confflags[$st]} \
+        --disable-vt --without-pmi --enable-mpi-interface-warning --disable-wrapper-rpath \
+        --enable-static --disable-java --enable-mpi-ext=all ${confflags[${st}]} \
         CC="${cc[$co]}"   CFLAGS="${flags[$cs]}" \
         CXX="${cxx[$co]}" CXXFLAGS="${flags[$cs]}" \
         FC="${fc[$co]}"   FCFLAGS="${flags[$cs]}"
@@ -107,13 +140,11 @@ prepend-path      LD_LIBRARY_PATH      \$main_root/lib64
     make -j$j
     make install
 
-
-
 # --with-cuda=${CUDADIR}
 # --enable-mpi-interface-warning --enable-debug --enable-mem-debug --enable-mem-profile
 
 
-    module unload $cv $mname
+    module unload $co/$cv ${mpref[$st]}$mname
 
     popd
     rm -rf $bld
@@ -122,6 +153,7 @@ done
 
 wait
 
+module unload debug
 
 echo "All done! Remember to clean up ${bldrt} yourself.."
 

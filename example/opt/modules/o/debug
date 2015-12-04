@@ -1,0 +1,18 @@
+#%Module -*- tcl -*-
+##
+## modulefile
+##
+
+proc ModulesHelp { } {
+  global describe
+  puts stderr describe
+}
+
+set describe "show debug modules"
+
+
+
+
+module use -a /opt/modules/.d
+
+
